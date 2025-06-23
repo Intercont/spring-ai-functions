@@ -1,4 +1,6 @@
 package com.igorfragadev.springaifunctions.model;
 
-public record GeocodingResponse() {
+import java.util.List;
+
+public record GeocodingResponse(List<GeocodingLocation> results) {
 }

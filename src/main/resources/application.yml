@@ -1,1 +1,9 @@
-spring.application.name=spring-ai-functions
+spring:
+  application:
+    name: spring-ai-functions
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+sfg:
+  aiapp:
+    apiNinjasKey: ${API_NINJAS_KEY}

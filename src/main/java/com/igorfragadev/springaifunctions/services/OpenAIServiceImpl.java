@@ -1,109 +1,50 @@
 package com.igorfragadev.springaifunctions.services;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.igorfragadev.springaiintro.model.*;
-import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.model.ChatResponse;
+import com.igorfragadev.springaifunctions.functions.WeatherServiceFunction;
+import com.igorfragadev.springaifunctions.model.Answer;
+import com.igorfragadev.springaifunctions.model.Question;
+import com.igorfragadev.springaifunctions.model.WeatherRequest;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
-import org.springframework.ai.converter.BeanOutputConverter;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
+import org.springframework.ai.chat.prompt.SystemPromptTemplate;
+import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
+import java.util.List;
 
 @Service
 public class OpenAIServiceImpl implements OpenAIService {
 
-    private final ChatModel chatModel;
-    ObjectMapper objectMapper;
+    private final OpenAiChatModel openAiChatModel;
+    private final GeocodingService geocodingService;
 
-    @Value("classpath:templates/get-capital-prompt.st")
-    private Resource getCapitalPrompt;
-
-    @Value("classpath:templates/get-capital-json-response-prompt.st")
-    private Resource getCapitalJSONPrompt;
-
-    @Value("classpath:templates/get-capital-with-info-prompt.st")
-    private Resource getCapitalWithInfoPrompt;
-
-    public OpenAIServiceImpl(ChatModel chatModel, ObjectMapper objectMapper) {
-        this.chatModel = chatModel;
-        this.objectMapper = objectMapper;
-    }
-
-    @Override
-    public String getAnswer(String question) {
-        PromptTemplate promptTemplate = new PromptTemplate(question);
-        Prompt prompt = promptTemplate.create();
-
-        ChatResponse response = chatModel.call(prompt);
-        return response.getResult().getOutput().getText();
+    public OpenAIServiceImpl(OpenAiChatModel openAiChatModel, GeocodingService geocodingService) {
+        this.openAiChatModel = openAiChatModel;
+        this.geocodingService = geocodingService;
     }
 
     @Override
     public Answer getAnswer(Question question) {
-        System.out.println("Received question: " + question.question()); // Log the question for debugging purposes only
-        PromptTemplate promptTemplate = new PromptTemplate(question.question());
-        Prompt prompt = promptTemplate.create();
+        var promptOptions = OpenAiChatOptions.builder()
+                .toolCallbacks(List.of(FunctionToolCallback
+                        .builder("CurrentWeather", new WeatherServiceFunction(geocodingService))
+                        .description("Get the current weather for a location")
+                        .inputType(WeatherRequest.class)
+                        .build()))
+                .build();
 
-        ChatResponse response = chatModel.call(prompt);
+        Message userMessage = new PromptTemplate(question.question()).createMessage();
+
+        Message systemMessage = new SystemPromptTemplate("You are a weather service. You receive weather information from a service based on the metrics system. " +
+                "if the user says that is american or british, provide the response in imperial system, converting from celsius to fahrenheit and the same for all other units, from metrics to imperial system, " +
+                "otherwise, provide it on the international system, e.g. temperature in celsius and wind in km/h and the same for every other units received in the response. " +
+                "Please provide all the details about the weather as received from the service in a friendly format").createMessage();
+
+        var response = openAiChatModel.call(new Prompt(List.of(systemMessage, userMessage), promptOptions));
+
         return new Answer(response.getResult().getOutput().getText());
-    }
-
-    @Override
-    public Answer getCapital(GetCapitalRequest capitalRequest) {
-//        PromptTemplate promptTemplate = new PromptTemplate("What is the capital of " + capitalRequest.capitalRequest() + "?");
-        PromptTemplate promptTemplate = new PromptTemplate(getCapitalPrompt);
-        Prompt prompt = promptTemplate.create(Map.of("stateOrCountry", capitalRequest.stateOrCountry())); //map the variable from the template into the prompt with the desired received value
-
-        ChatResponse response = chatModel.call(prompt);
-        return new Answer(response.getResult().getOutput().getText());
-    }
-
-    @Override
-    public GetCapitalResponse getCapitalJSON(GetCapitalRequest capitalRequest) {
-        BeanOutputConverter<GetCapitalResponse> converter = new BeanOutputConverter<>(GetCapitalResponse.class); //generates the whole expected format of JSON that is passed for OpenAI
-        String format = converter.getFormat();
-        System.out.println("Format for JSON response: " + format);
-
-        PromptTemplate promptTemplate = new PromptTemplate(getCapitalJSONPrompt);
-        Prompt prompt = promptTemplate.create(Map.of(
-                "stateOrCountry", capitalRequest.stateOrCountry(),
-                "format", format
-                )
-        );
-
-        ChatResponse response = chatModel.call(prompt);
-
-        System.out.println(response.getResult().getOutput().getText());
-        return converter.convert(response.getResult().getOutput().getText());
-    }
-
-    @Override
-    public Answer getCapitalWithInfo(GetCapitalRequest capitalRequest) {
-        PromptTemplate promptTemplate = new PromptTemplate(getCapitalWithInfoPrompt);
-        Prompt prompt = promptTemplate.create(Map.of("stateOrCountry", capitalRequest.stateOrCountry()));
-
-        ChatResponse response = chatModel.call(prompt);
-        return new Answer(response.getResult().getOutput().getText());
-    }
-
-    @Override
-    public GetCapitalWithInfoJSONResponse getCapitalWithInfoJSON(GetCapitalRequest capitalRequest) {
-        BeanOutputConverter<GetCapitalWithInfoJSONResponse> converter = new BeanOutputConverter<>(GetCapitalWithInfoJSONResponse.class);
-        String format = converter.getFormat();
-        System.out.println(format);
-
-        PromptTemplate promptTemplate = new PromptTemplate(getCapitalJSONPrompt);
-        Prompt prompt = promptTemplate.create(Map.of(
-                        "stateOrCountry", capitalRequest.stateOrCountry(),
-                        "format", format
-                )
-        );
-
-        ChatResponse response = chatModel.call(prompt);
-        return converter.convert(response.getResult().getOutput().getText());
     }
 }

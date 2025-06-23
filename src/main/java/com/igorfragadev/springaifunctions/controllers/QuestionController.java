@@ -1,42 +1,24 @@
 package com.igorfragadev.springaifunctions.controllers;
 
-import com.igorfragadev.springaiintro.model.*;
-import com.igorfragadev.springaiintro.services.OpenAIService;
+import com.igorfragadev.springaifunctions.model.Answer;
+import com.igorfragadev.springaifunctions.model.Question;
+import com.igorfragadev.springaifunctions.services.OpenAIService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+@RequiredArgsConstructor
 @RestController
 public class QuestionController {
 
-    private final OpenAIService openAIService;
+    @Autowired
+    OpenAIService openAIService;
 
-    public QuestionController(OpenAIService openAIService) {
-        this.openAIService = openAIService;
-    }
-
-    @PostMapping("/ask")
+    @PostMapping("/weather")
     public Answer askQuestion(@RequestBody Question question) {
         return openAIService.getAnswer(question);
     }
 
-    @PostMapping("/capital")
-    public Answer getCapital(@RequestBody GetCapitalRequest stateOrCountry) {
-        return openAIService.getCapital(stateOrCountry);
-    }
-
-    @PostMapping("/capitalWithInfo")
-    public Answer getCapitalWithInfo(@RequestBody GetCapitalRequest stateOrCountry) {
-        return openAIService.getCapitalWithInfo(stateOrCountry);
-    }
-
-    @PostMapping("/capitalJSON")
-    public GetCapitalResponse getCapitalJSON(@RequestBody GetCapitalRequest stateOrCountry) {
-        return openAIService.getCapitalJSON(stateOrCountry);
-    }
-
-    @PostMapping("/capitalWithInfoJSON")
-    public GetCapitalWithInfoJSONResponse getcapitalWithInfoJSON(@RequestBody GetCapitalRequest stateOrCountry) {
-        return openAIService.getCapitalWithInfoJSON(stateOrCountry);
-    }
 }
