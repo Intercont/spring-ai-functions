@@ -38,7 +38,7 @@ public class GeocodingServiceImpl implements GeocodingService {
             return Optional.empty();
 
         } catch (Exception e) {
-//            log.error("Error calling geocoding API: {}", e.getMessage());
+            log.error("Error calling geocoding API: {}", e.getMessage());
             return Optional.empty();
         }
     }
@@ -51,7 +51,7 @@ public class GeocodingServiceImpl implements GeocodingService {
                     response.results() : List.of();
 
         } catch (Exception e) {
-//            log.error("Error calling geocoding API: {}", e.getMessage());
+            log.error("Error calling geocoding API: {}", e.getMessage());
             return List.of();
         }
     }
@@ -71,7 +71,7 @@ public class GeocodingServiceImpl implements GeocodingService {
                     }).build();
 
             return restClient.get().uri(uriBuilder -> {
-                System.out.println("Building URI for weather request: " + weatherRequest);
+                log.debug("Building URI for weather request: {}", weatherRequest);
 
                 uriBuilder.queryParam("lat", String.valueOf(location.get().latitude()));
                 uriBuilder.queryParam("lon", String.valueOf(location.get().longitude()));
@@ -79,7 +79,7 @@ public class GeocodingServiceImpl implements GeocodingService {
             }).retrieve().body(WeatherResponse.class);
         }
 
-        System.out.println("No location found for city: " + weatherRequest.city());
+        log.error("No location found for city: {}", weatherRequest.city());
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No location found for city: " + weatherRequest.city());
     }
 

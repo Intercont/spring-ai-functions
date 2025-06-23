@@ -6,6 +6,7 @@ import com.igorfragadev.springaifunctions.model.Answer;
 import com.igorfragadev.springaifunctions.model.Question;
 import com.igorfragadev.springaifunctions.model.StockPriceRequest;
 import com.igorfragadev.springaifunctions.model.WeatherRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
@@ -19,18 +20,14 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class OpenAIServiceImpl implements OpenAIService {
 
     @Value("${sfg.aiapp.apiNinjasKey}")
     private String apiNinjasKey;
 
-    private final OpenAiChatModel openAiChatModel;
-    private final GeocodingService geocodingService;
-
-    public OpenAIServiceImpl(OpenAiChatModel openAiChatModel, GeocodingService geocodingService) {
-        this.openAiChatModel = openAiChatModel;
-        this.geocodingService = geocodingService;
-    }
+    final OpenAiChatModel openAiChatModel;
+    final GeocodingService geocodingService;
 
     @Override
     public Answer getAnswer(Question question) {

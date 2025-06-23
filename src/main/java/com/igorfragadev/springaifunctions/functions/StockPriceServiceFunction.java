@@ -2,12 +2,14 @@ package com.igorfragadev.springaifunctions.functions;
 
 import com.igorfragadev.springaifunctions.model.StockPriceRequest;
 import com.igorfragadev.springaifunctions.model.StockPriceResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.function.Function;
 
+@Slf4j
 public class StockPriceServiceFunction implements Function<StockPriceRequest, StockPriceResponse> {
 
     private static final String STOCKPRICE_URL = "https://api.api-ninjas.com/v1/stockprice";
@@ -30,7 +32,7 @@ public class StockPriceServiceFunction implements Function<StockPriceRequest, St
 
         try {
             return restClient.get().uri(uriBuilder -> {
-                System.out.println("Building URI for stock price request: " + stockPriceRequest);
+                log.debug("Building URI for stock price request: {}", stockPriceRequest);
 
                 uriBuilder.queryParam("ticker", String.valueOf(stockPriceRequest.ticker()));
                 return uriBuilder.build();
