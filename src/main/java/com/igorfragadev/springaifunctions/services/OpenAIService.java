@@ -6,5 +6,6 @@ import com.igorfragadev.springaifunctions.model.Question;
 public interface OpenAIService {
 
     Answer getAnswer(Question question);
+    Answer getStockPrice(Question question);
 
 }
