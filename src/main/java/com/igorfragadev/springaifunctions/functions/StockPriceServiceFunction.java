@@ -2,7 +2,9 @@ package com.igorfragadev.springaifunctions.functions;
 
 import com.igorfragadev.springaifunctions.model.StockPriceRequest;
 import com.igorfragadev.springaifunctions.model.StockPriceResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.function.Function;
 
@@ -26,11 +28,17 @@ public class StockPriceServiceFunction implements Function<StockPriceRequest, St
                     httpHeaders.set("Content-Type", "application/json");
                 }).build();
 
-        return restClient.get().uri(uriBuilder -> {
-            System.out.println("Building URI for stock price request: " + stockPriceRequest);
+        try {
+            return restClient.get().uri(uriBuilder -> {
+                System.out.println("Building URI for stock price request: " + stockPriceRequest);
 
-            uriBuilder.queryParam("ticker", String.valueOf(stockPriceRequest.ticker()));
-            return uriBuilder.build();
-        }).retrieve().body(StockPriceResponse.class);
+                uriBuilder.queryParam("ticker", String.valueOf(stockPriceRequest.ticker()));
+                return uriBuilder.build();
+            }).retrieve().body(StockPriceResponse.class);
+
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "No stock price found for ticker: " + stockPriceRequest.ticker());
+        }
     }
 }
